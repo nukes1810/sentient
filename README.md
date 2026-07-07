@@ -143,21 +143,23 @@ It works on other printers too. If you get it running on yours, open a PR with y
 
 ## Roadmap
 
-- [x] Dynamic accel by height
-- [x] Smart macros
-- [x] Auto shaper scheduling
-- [x] Max accel auto-update from shaper results
-- [x] Web dashboard
-- [x] KlipperScreen integration
-- [x] Chamber heat soak
-- [x] Humidity monitoring
-- [ ] One line installer
-- [ ] VL53L5CX Klipper driver
-- [ ] First layer optical scanning
-- [ ] Real time flow compensation
-- [ ] Failure detection
-- [ ] Moonraker update manager
-- [ ] Native Klipper module
+-  Dynamic accel by height
+-  Smart macros
+-  Auto shaper scheduling
+-  Max accel auto-update from shaper results
+-  Web dashboard
+-  KlipperScreen integration
+-  Chamber heat soak
+-  Humidity monitoring
+
+Comming Soon
+-  One line installer
+-  VL53L5CX Klipper driver
+-  First layer optical scanning
+-  Real time flow compensation
+-  Failure detection
+-  Moonraker update manager
+-  Native Klipper module
 
 ---
 
