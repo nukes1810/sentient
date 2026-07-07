@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KlipperFusion</title>
+<style>
+  :root {
+    --bg:        #121212;
+    --surface:   #1e1e1e;
+    --surface2:  #252525;
+    --border:    #2e2e2e;
+    --text:      #ececec;
+    --text-dim:  #888;
+    --text-mute: #555;
+    --accent:    #2196f3;
+    --green:     #4caf50;
+    --yellow:    #ff9800;
+    --red:       #f44336;
+    --teal:      #00bcd4;
+    --font-mono: 'Roboto Mono', 'Courier New', monospace;
+    --font-ui:   'Roboto', system-ui, sans-serif;
+    --radius:    6px;
+    --radius-lg: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.3px;
+  }
+
+  .logo span {
+    color: var(--text-dim);
+    font-weight: 400;
+  }
+
+  .printer-name {
+    font-size: 12px;
+    color: var(--text-dim);
+    border-left: 1px solid var(--border);
+    padding-left: 10px;
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text-mute);
+    display: inline-block;
+    margin-right: 5px;
+  }
+
+  .status-dot.online { background: var(--green); }
+  .status-dot.printing { background: var(--accent); animation: blink 2s infinite; }
+  .status-dot.error { background: var(--red); }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* ── LAYOUT ── */
+  .layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 0;
+    min-height: calc(100vh - 48px);
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 16px 0;
+  }
+
+  .sidebar-section {
+    padding: 0 16px;
+    margin-bottom: 24px;
+  }
+
+  .sidebar-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--text-mute);
+    margin-bottom: 10px;
+    padding: 0 4px;
+  }
+
+  .temp-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 4px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .temp-row:last-child { border-bottom: none; }
+
+  .temp-label {
+    font-size: 12px;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .temp-icon {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-mute);
+  }
+
+  .temp-icon.hot { background: var(--red); }
+  .temp-icon.warm { background: var(--yellow); }
+  .temp-icon.cool { background: var(--accent); }
+
+  .temp-value {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  .temp-target {
+    font-size: 10px;
+    color: var(--text-mute);
+    font-family: var(--font-mono);
+  }
+
+  /* ── MAIN CONTENT ── */
+  .main {
+    padding: 20px;
+    overflow-y: auto;
+  }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-mute);
+    margin-bottom: 12px;
+  }
+
+  /* ── CARDS ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+  }
+
+  .card-label {
+    font-size: 11px;
+    color: var(--text-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 6px;
+  }
+
+  .card-value {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text);
+    font-family: var(--font-mono);
+    line-height: 1.2;
+  }
+
+  .card-sub {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  /* Zone card accent lines */
+  .card.zone-full    { border-left: 3px solid var(--green); }
+  .card.zone-medium  { border-left: 3px solid var(--yellow); }
+  .card.zone-safe    { border-left: 3px solid var(--red); }
+  .card.zone-idle    { border-left: 3px solid var(--border); }
+  .card.accent-blue  { border-left: 3px solid var(--accent); }
+  .card.accent-teal  { border-left: 3px solid var(--teal); }
+
+  .zone-full  .card-value { color: var(--green); }
+  .zone-medium .card-value { color: var(--yellow); }
+  .zone-safe  .card-value { color: var(--red); }
+  .accent-blue .card-value { color: var(--accent); }
+  .accent-teal .card-value { color: var(--teal); }
+
+  /* ── PRINT STATUS BAR ── */
+  .print-status-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .print-status-info { flex: 1; }
+
+  .print-state {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .print-file {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 300px;
+  }
+
+  .print-progress-wrap {
+    flex: 1;
+  }
+
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-bottom: 5px;
+    font-family: var(--font-mono);
+  }
+
+  .progress-track {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 1s ease;
+  }
+
+  .print-eta {
+    font-size: 11px;
+    color: var(--text-mute);
+    white-space: nowrap;
+    font-family: var(--font-mono);
+  }
+
+  /* ── SHAPER STATUS ── */
+  .shaper-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .shaper-info { flex: 1; }
+
+  .shaper-title {
+    font-size: 11px;
+    color: var(--text-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 4px;
+  }
+
+  .shaper-state {
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .shaper-state.ok      { color: var(--green); }
+  .shaper-state.soon    { color: var(--yellow); }
+  .shaper-state.overdue { color: var(--red); }
+
+  .shaper-detail {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  .shaper-freqs {
+    display: flex;
+    gap: 20px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    text-align: right;
+  }
+
+  .shaper-freq-item span {
+    display: block;
+    font-size: 13px;
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  /* ── ACTIVITY LOG ── */
+  .log-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .log-header {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--text-mute);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .log-live {
+    font-size: 10px;
+    color: var(--green);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .log-live::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: blink 2s infinite;
+  }
+
+  .log-body {
+    padding: 4px 0;
+    max-height: 200px;
+    overflow-y: auto;
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+
+  .log-entry {
+    padding: 5px 16px;
+    display: flex;
+    gap: 12px;
+    border-bottom: 1px solid var(--bg);
+    align-items: flex-start;
+  }
+
+  .log-time { color: var(--text-mute); white-space: nowrap; flex-shrink: 0; }
+  .log-msg  { color: var(--text-dim); }
+  .log-entry.info  .log-msg { color: var(--accent); }
+  .log-entry.good  .log-msg { color: var(--green); }
+  .log-entry.warn  .log-msg { color: var(--yellow); }
+  .log-entry.error .log-msg { color: var(--red); }
+
+  /* ── HUMIDITY BAR ── */
+  .humidity-track {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+
+  .humidity-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1s ease, background 1s ease;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 700px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { border-right: none; border-bottom: 1px solid var(--border); padding: 12px 0; }
+    .print-status-bar { flex-wrap: wrap; }
+    .shaper-card { flex-wrap: wrap; }
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo">KlipperFusion <span>/ Dashboard</span></div>
+    <div class="printer-name" id="printer-name">Connecting...</div>
+  </div>
+  <div class="topbar-right">
+    <span><span class="status-dot" id="conn-dot"></span><span id="conn-status">Offline</span></span>
+    <span id="clock"></span>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Temperatures</div>
+
+      <div class="temp-row">
+        <div class="temp-label">
+          <div class="temp-icon" id="icon-hotend"></div>
+          Nozzle
+        </div>
+        <div>
+          <div class="temp-value" id="temp-hotend">—</div>
+          <div class="temp-target" id="target-hotend"></div>
+        </div>
+      </div>
+
+      <div class="temp-row">
+        <div class="temp-label">
+          <div class="temp-icon" id="icon-bed"></div>
+          Bed
+        </div>
+        <div>
+          <div class="temp-value" id="temp-bed">—</div>
+          <div class="temp-target" id="target-bed"></div>
+        </div>
+      </div>
+
+      <div class="temp-row">
+        <div class="temp-label">
+          <div class="temp-icon" id="icon-chamber"></div>
+          Chamber
+        </div>
+        <div>
+          <div class="temp-value" id="temp-chamber">—</div>
+          <div class="temp-target" id="target-chamber"></div>
+        </div>
+      </div>
+
+      <div class="temp-row">
+        <div class="temp-label">
+          <div class="temp-icon cool"></div>
+          MCU
+        </div>
+        <div>
+          <div class="temp-value" id="temp-mcu">—</div>
+        </div>
+      </div>
+
+      <div class="temp-row">
+        <div class="temp-label">
+          <div class="temp-icon cool"></div>
+          Pi
+        </div>
+        <div>
+          <div class="temp-value" id="temp-pi">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Environment</div>
+      <div class="temp-row">
+        <div class="temp-label">
+          <div class="temp-icon" id="icon-humidity"></div>
+          Humidity
+        </div>
+        <div>
+          <div class="temp-value" id="humidity-val">—</div>
+          <div class="humidity-track">
+            <div class="humidity-fill" id="humidity-bar" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Accel Zones</div>
+      <div class="temp-row">
+        <div class="temp-label" style="color:var(--green)">● Full</div>
+        <div class="temp-value" id="accel-full-val" style="font-size:12px">—</div>
+      </div>
+      <div class="temp-row">
+        <div class="temp-label" style="color:var(--yellow)">● Medium</div>
+        <div class="temp-value" id="accel-med-val" style="font-size:12px">—</div>
+      </div>
+      <div class="temp-row">
+        <div class="temp-label" style="color:var(--red)">● Safe</div>
+        <div class="temp-value" id="accel-safe-val" style="font-size:12px">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- Print Status -->
+    <div class="print-status-bar" id="print-status-bar">
+      <div class="print-status-info">
+        <div class="print-state" id="print-state">Idle</div>
+        <div class="print-file" id="print-file">No file loaded</div>
+      </div>
+      <div class="print-progress-wrap">
+        <div class="progress-label">
+          <span id="progress-pct">0%</span>
+          <span id="progress-eta"></span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="print-eta" id="print-time-elapsed"></div>
+    </div>
+
+    <!-- Smart Tune Cards -->
+    <div class="section-title">Smart Tune — Live</div>
+    <div class="card-grid">
+
+      <div class="card zone-idle" id="card-zone">
+        <div class="card-label">Speed Zone</div>
+        <div class="card-value" id="zone-val">—</div>
+        <div class="card-sub" id="zone-sub"></div>
+      </div>
+
+      <div class="card accent-blue">
+        <div class="card-label">Print Height</div>
+        <div class="card-value" id="height-val">—</div>
+        <div class="card-sub" id="height-sub"></div>
+      </div>
+
+      <div class="card accent-blue">
+        <div class="card-label">Active Accel</div>
+        <div class="card-value" id="accel-active">—</div>
+        <div class="card-sub" id="accel-sub"></div>
+      </div>
+
+      <div class="card accent-teal">
+        <div class="card-label">Filament</div>
+        <div class="card-value" id="filament-val" style="font-size:16px">—</div>
+        <div class="card-sub" id="filament-sub"></div>
+      </div>
+
+    </div>
+
+    <!-- Input Shaper -->
+    <div class="section-title">Input Shaper</div>
+    <div class="shaper-card">
+      <div class="shaper-info">
+        <div class="shaper-title">Calibration Status</div>
+        <div class="shaper-state" id="shaper-state">—</div>
+        <div class="shaper-detail" id="shaper-detail">—</div>
+      </div>
+      <div class="shaper-freqs">
+        <div class="shaper-freq-item">
+          X Axis
+          <span id="shaper-x">—</span>
+        </div>
+        <div class="shaper-freq-item">
+          Y Axis
+          <span id="shaper-y">—</span>
+        </div>
+        <div class="shaper-freq-item">
+          Max Accel
+          <span id="shaper-accel">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activity Log -->
+    <div class="section-title">Activity Log</div>
+    <div class="log-card">
+      <div class="log-header">
+        Events
+        <span class="log-live">Live</span>
+      </div>
+      <div class="log-body" id="log-body">
+        <div class="log-entry">
+          <span class="log-time">--:--:--</span>
+          <span class="log-msg">Connecting to printer...</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const HOST = `http://${location.hostname}:7125`;
+const INTERVAL = 2000;
+
+let log = [];
+let lastZone = null;
+let lastZ = 0;
+let lastState = null;
+
+function ts() {
+  return new Date().toLocaleTimeString('en-US', {hour12: false});
+}
+
+function addLog(msg, type = '') {
+  log.unshift({ t: ts(), msg, type });
+  if (log.length > 30) log.pop();
+  renderLog();
+}
+
+function renderLog() {
+  document.getElementById('log-body').innerHTML = log.map(e =>
+    `<div class="log-entry ${e.type}">
+      <span class="log-time">${e.t}</span>
+      <span class="log-msg">${e.msg}</span>
+    </div>`
+  ).join('');
+}
+
+function tempIcon(temp, hotThresh = 100, warmThresh = 40) {
+  if (temp > hotThresh) return 'hot';
+  if (temp > warmThresh) return 'warm';
+  return 'cool';
+}
+
+function setIcon(id, cls) {
+  const el = document.getElementById(id);
+  if (el) el.className = `temp-icon ${cls}`;
+}
+
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+function setClass(el, cls) {
+  if (typeof el === 'string') el = document.getElementById(el);
+  if (el) el.className = cls;
+}
+
+// Clock
+setInterval(() => {
+  document.getElementById('clock').textContent =
+    new Date().toLocaleTimeString('en-US', {hour12: false});
+}, 1000);
+
+async function fetchJSON(url) {
+  const r = await fetch(url);
+  return r.json();
+}
+
+async function update() {
+  try {
+    const obj = await fetchJSON(
+      `${HOST}/printer/objects/query?print_stats&toolhead&heater_bed&extruder` +
+      `&temperature_sensor+enclosure_temp&temperature_sensor+mcu_temp` +
+      `&temperature_sensor+raspberry_pi&gcode_macro+_TUNE_VARS`
+    );
+    const s = obj.result.status;
+
+    // Connection
+    document.getElementById('conn-dot').className = 'status-dot online';
+    setText('conn-status', 'Connected');
+    setText('printer-name', 'Nebula 370');
+
+    // ── Print stats ──
+    const ps = s.print_stats;
+    const state = ps.state;
+    const file = ps.filename || '';
+    const prog = ps.progress || 0;
+    const elapsed = ps.print_duration || 0;
+    const total = prog > 0 ? elapsed / prog : 0;
+    const eta = Math.max(total - elapsed, 0);
+
+    let stateLabel = 'Idle';
+    let barColor = 'var(--text-mute)';
+    if (state === 'printing') { stateLabel = 'Printing'; barColor = 'var(--accent)'; }
+    else if (state === 'paused') { stateLabel = 'Paused'; barColor = 'var(--yellow)'; }
+    else if (state === 'complete') { stateLabel = 'Complete'; barColor = 'var(--green)'; }
+    else if (state === 'error') { stateLabel = 'Error'; barColor = 'var(--red)'; }
+
+    setText('print-state', stateLabel);
+    setText('print-file', file || 'No file loaded');
+    setText('progress-pct', `${(prog * 100).toFixed(1)}%`);
+    document.getElementById('progress-fill').style.width = `${prog * 100}%`;
+    document.getElementById('progress-fill').style.background = barColor;
+
+    const etaMin = Math.round(eta / 60);
+    setText('progress-eta', prog > 0 ? `ETA ${etaMin}m` : '');
+    const elMin = Math.floor(elapsed / 60);
+    const elSec = Math.floor(elapsed % 60);
+    setText('print-time-elapsed', elapsed > 0 ? `${elMin}m ${elSec.toString().padStart(2,'0')}s` : '');
+
+    const dot = document.getElementById('conn-dot');
+    dot.className = state === 'printing' ? 'status-dot printing' : 'status-dot online';
+
+    if (state !== lastState) {
+      if (state === 'printing') addLog(`Started: ${file}`, 'info');
+      if (state === 'complete') addLog('Print finished', 'good');
+      if (state === 'paused') addLog('Print paused', 'warn');
+      if (state === 'error') addLog('Print error', 'error');
+      lastState = state;
+    }
+
+    // ── Temps ──
+    const ext = s.extruder;
+    const bed = s.heater_bed;
+    const enc = s['temperature_sensor enclosure_temp'];
+    const mcu = s['temperature_sensor mcu_temp'];
+    const pi  = s['temperature_sensor raspberry_pi'];
+
+    if (ext) {
+      setText('temp-hotend', `${ext.temperature.toFixed(1)}°`);
+      setText('target-hotend', ext.target > 0 ? `→ ${ext.target.toFixed(0)}°` : 'off');
+      setIcon('icon-hotend', tempIcon(ext.temperature, 150, 60));
+    }
+    if (bed) {
+      setText('temp-bed', `${bed.temperature.toFixed(1)}°`);
+      setText('target-bed', bed.target > 0 ? `→ ${bed.target.toFixed(0)}°` : 'off');
+      setIcon('icon-bed', tempIcon(bed.temperature, 80, 40));
+    }
+    if (enc) {
+      setText('temp-chamber', `${enc.temperature.toFixed(1)}°`);
+      const ct = enc.temperature;
+      let chamberDesc = ct < 25 ? 'Cool' : ct < 35 ? 'Warm' : 'Hot';
+      setText('target-chamber', chamberDesc);
+      setIcon('icon-chamber', tempIcon(ct, 40, 25));
+
+      if (enc.humidity !== undefined) {
+        const h = enc.humidity.toFixed(1);
+        setText('humidity-val', `${h}%`);
+        const bar = document.getElementById('humidity-bar');
+        bar.style.width = `${Math.min(enc.humidity, 100)}%`;
+        bar.style.background = enc.humidity > 50 ? 'var(--red)' : enc.humidity > 35 ? 'var(--yellow)' : 'var(--green)';
+        setIcon('icon-humidity', enc.humidity > 50 ? 'hot' : enc.humidity > 35 ? 'warm' : 'cool');
+      }
+    }
+    if (mcu) setText('temp-mcu', `${mcu.temperature.toFixed(1)}°`);
+    if (pi)  setText('temp-pi',  `${pi.temperature.toFixed(1)}°`);
+
+    // ── Tune Vars ──
+    const tv = s['gcode_macro _TUNE_VARS'];
+    if (tv) {
+      const zone    = tv.accel_zone || 'full';
+      const height  = parseFloat(tv.current_height || 0);
+      const active  = tv.print_active;
+      const filType = (tv.filament_type || 'PLA').replace(/"/g,'');
+      const maxA    = parseInt(tv.max_accel || 4300);
+      const medA    = Math.round(maxA * 0.70);
+      const safeA   = Math.round(maxA * 0.45);
+
+      // Sidebar accel values
+      setText('accel-full-val',  `${maxA.toLocaleString()} mm/s²`);
+      setText('accel-med-val',   `${medA.toLocaleString()} mm/s²`);
+      setText('accel-safe-val',  `${safeA.toLocaleString()} mm/s²`);
+
+      // Zone card
+      const cardZone = document.getElementById('card-zone');
+      let zoneLabel = '—', zoneSub = '', zoneClass = 'card zone-idle', activeA = maxA;
+      if (!active || state === 'standby') {
+        zoneLabel = 'Standby'; zoneSub = 'No active print';
+      } else if (zone === 'full') {
+        zoneLabel = 'Full'; zoneSub = `Z < 50mm — ${maxA.toLocaleString()} mm/s²`;
+        zoneClass = 'card zone-full'; activeA = maxA;
+      } else if (zone === 'medium') {
+        zoneLabel = 'Medium'; zoneSub = `Z 50–150mm — ${medA.toLocaleString()} mm/s²`;
+        zoneClass = 'card zone-medium'; activeA = medA;
+      } else if (zone === 'conservative') {
+        zoneLabel = 'Safe'; zoneSub = `Z > 150mm — ${safeA.toLocaleString()} mm/s²`;
+        zoneClass = 'card zone-safe'; activeA = safeA;
+      }
+      cardZone.className = zoneClass;
+      setText('zone-val', zoneLabel);
+      setText('zone-sub', zoneSub);
+
+      // Active accel
+      setText('accel-active', `${activeA.toLocaleString()}`);
+      setText('accel-sub', 'mm/s²');
+
+      // Height
+      setText('height-val', `${height.toFixed(1)} mm`);
+      setText('height-sub', height < 50 ? 'Low — full speed' : height < 150 ? 'Mid height' : 'Tall — reduced speed');
+
+      // Filament
+      setText('filament-val', filType);
+      const filDescs = { PLA:'215°C / 60°C bed', PETG:'250°C / 80°C bed', ASA:'260°C / 100°C bed', ABS:'250°C / 100°C bed', TPU:'230°C / 35°C bed' };
+      setText('filament-sub', filDescs[filType] || '');
+
+      // Log zone changes
+      if (zone !== lastZone && active) {
+        if (zone === 'full')         addLog(`Zone → Full speed (${maxA.toLocaleString()} mm/s²)`, 'good');
+        if (zone === 'medium')       addLog(`Zone → Medium speed (${medA.toLocaleString()} mm/s²)`, 'info');
+        if (zone === 'conservative') addLog(`Zone → Safe speed (${safeA.toLocaleString()} mm/s²)`, 'warn');
+        lastZone = zone;
+      }
+      if (height >= 50  && lastZ < 50  && active) addLog('Height milestone: 50mm — medium speed active', 'info');
+      if (height >= 150 && lastZ < 150 && active) addLog('Height milestone: 150mm — safe speed active', 'warn');
+      lastZ = height;
+    }
+
+    // ── Shaper ──
+    try {
+      const sv = await fetchJSON(`${HOST}/server/database/item?namespace=variables&key=last_shaper_day`);
+      const lastDay = sv.result.value || 0;
+      const nowDay  = Math.floor(Date.now() / 86400000);
+      const since   = nowDay - lastDay;
+      const until   = Math.max(14 - since, 0);
+
+      let shaperClass = 'shaper-state ok';
+      let shaperLabel = 'Good';
+      let shaperDetail = `Calibrated ${since} day${since !== 1 ? 's' : ''} ago — next in ${until} days`;
+
+      if (lastDay === 0) {
+        shaperClass = 'shaper-state overdue';
+        shaperLabel = 'Never calibrated';
+        shaperDetail = 'Run RUN_SHAPER_CALIBRATION from KlipperScreen';
+      } else if (since >= 14) {
+        shaperClass = 'shaper-state overdue';
+        shaperLabel = 'Calibration due';
+        shaperDetail = `${since} days since last run — will auto-run on next print`;
+      } else if (since >= 10) {
+        shaperClass = 'shaper-state soon';
+        shaperLabel = 'Due soon';
+        shaperDetail = `${since} days since last run — due in ${until} days`;
+      }
+
+      const el = document.getElementById('shaper-state');
+      el.className = shaperClass;
+      el.textContent = shaperLabel;
+      setText('shaper-detail', shaperDetail);
+    } catch(e) {
+      setText('shaper-state', 'Run a print to initialize');
+      document.getElementById('shaper-state').className = 'shaper-state';
+    }
+
+    // Shaper freqs from config
+    try {
+      const cfg = await fetchJSON(`${HOST}/printer/objects/query?configfile`);
+      const is = cfg.result.status.configfile.settings.input_shaper || {};
+      setText('shaper-x', is.shaper_freq_x ? `${is.shaper_freq_x} Hz` : '—');
+      setText('shaper-y', is.shaper_freq_y ? `${is.shaper_freq_y} Hz` : '—');
+      const tv2 = s['gcode_macro _TUNE_VARS'];
+      setText('shaper-accel', tv2 ? `${parseInt(tv2.max_accel || 4300).toLocaleString()} mm/s²` : '—');
+    } catch(e) {}
+
+  } catch(err) {
+    document.getElementById('conn-dot').className = 'status-dot error';
+    setText('conn-status', 'Offline');
+    setText('printer-name', 'Not connected');
+    addLog(`Connection lost: ${err.message}`, 'error');
+  }
+}
+
+addLog('KlipperFusion dashboard started', 'info');
+update();
+setInterval(update, INTERVAL);
+</script>
+</body>
+</html>
