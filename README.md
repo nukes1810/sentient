@@ -1,270 +1,201 @@
-# KlipperFusion 🖨️
+KlipperFusion
 
-> Open-source print intelligence for Klipper — adaptive flow, failure detection, and real-time sensor fusion for any 3D printer.
+I got tired of watching Bambu and other manufacturers lock down their firmware while charging a premium for features that should exist on every printer. Auto flow calibration, first layer scanning, failure detection — none of this is magic. It's sensors and software. So I built it myself.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Klipper](https://img.shields.io/badge/Klipper-Compatible-green.svg)](https://github.com/Klipper3d/klipper)
-[![Status](https://img.shields.io/badge/Status-Active%20Development-blue.svg)]()
+This started as a personal project on my Nebula 370 custom CoreXY build. Every feature in here has been printed, broken, fixed, and reprinted. Nothing is theoretical.
 
----
+The goal is simple — if you built your own printer or run Klipper, you shouldn't have to choose between features and freedom. KlipperFusion is the answer to that.
 
-## What is KlipperFusion?
 
-KlipperFusion is a modular, printer-agnostic intelligence layer for Klipper that brings commercial printer capabilities to any machine. Built and battle-tested on a custom Nebula 370 CoreXY with Xol toolhead, it is designed to work on any Klipper-based printer regardless of size, kinematics, or sensor configuration.
+Why This Exists
 
-The goal is simple — give every Klipper printer the kind of smart, self-aware behavior that commercial printers like Bambu Lab charge thousands of dollars for, but fully open, fully customizable, and fully yours.
+The 3D printing world is splitting. On one side you have locked-down commercial printers with genuinely impressive software. On the other you have open source machines with incredible hardware potential but no unified intelligence layer to tie it together.
 
----
+Nobody should have to buy a Bambu to get smart printing. If you have the hardware, you should have the features.
 
-## Philosophy
+KlipperFusion is an open, modular, community-driven intelligence layer for Klipper. Start with zero extra hardware and get smarter printing today. Add sensors to unlock more. Build toward something that matches or beats anything commercial — and actually understand how it works.
 
-- **Modular** — use only what you have. Zero extra hardware required to start.
-- **Printer agnostic** — CoreXY, bed slinger, delta, toolchanger — all supported.
-- **Progressive** — add sensors to unlock more features automatically.
-- **Community driven** — built in the open, improved by everyone.
-- **No lock-in** — your printer, your code, your data.
 
----
+What It Does Right Now
 
-## Feature Tiers
+No extra hardware needed to start. Install it and your printer gets smarter today.
 
-KlipperFusion uses a tiered system. Every tier builds on the last. Start at Tier 0 today with no extra hardware.
+Dynamic acceleration by print height — tall prints have always been a problem on fast printers. Banding, ringing, layer separation. KlipperFusion automatically backs off acceleration as the print gets taller, based on your actual input shaper results not guesswork.
 
-### Tier 0 — Base (Any Klipper Printer, No Extra Hardware)
-- ✅ Dynamic acceleration by print height
-- ✅ Smart START_PRINT with filament type awareness
-- ✅ Automatic input shaper scheduling
-- ✅ Live speed zone display (Full / Medium / Conservative)
-- ✅ Real-time web dashboard
-- ✅ Manual accel override macros
-- ✅ KlipperScreen menu integration
+Under 50mm   → full speed    (100% of your calibrated max accel)
+50 to 150mm  → medium speed  (70%)
+Over 150mm   → safe speed    (45%)
 
-### Tier 1 — Chamber Awareness (+ SHT3X / BME280 / Any Chamber Sensor)
-- ✅ Automatic heat soak for ASA/ABS
-- ✅ Humidity monitoring with filament drying warnings
-- ✅ Chamber temperature tracking per print
-- ✅ Enclosure condition logging
+Zone changes happen automatically mid-print. You'll see them in the console and on the dashboard as they happen.
 
-### Tier 2 — Resonance Intelligence (+ ADXL345)
-- ✅ Scheduled input shaper auto-calibration
-- ✅ Post-calibration max_accel auto-update
-- ✅ Belt tension monitoring via Shake&Tune integration
-- ✅ Resonance anomaly detection during printing
+Smart START_PRINT — knows what filament you're printing, heat soaks for ASA/ABS if you have a chamber sensor, checks shaper calibration age, sets the right accel zone from the first layer.
 
-### Tier 3 — Optical Intelligence (+ VL53L5CX ToF Sensor) *Coming Soon*
-- 🔜 First layer optical scanning
-- 🔜 Real-time flow compensation from surface readings
-- 🔜 Spaghetti and failure detection
-- 🔜 Layer shift detection
-- 🔜 Adaptive Z offset per zone
+Auto shaper scheduling — run calibration manually when you want it. After it runs, max accel updates automatically from your Y axis results. No more guessing what number to put in printer.cfg.
 
-### Tier 4 — Vision (+ Camera) *Coming Soon*
-- 🔜 AI-powered failure detection via Obico integration
-- 🔜 Timelapse with automatic quality tagging
-- 🔜 Visual first layer grading
+Live web dashboard — open it on your phone or any browser on your network. Shows current speed zone, print height, chamber conditions, shaper status, and a plain English activity log of everything the system is doing.
 
-### Tier 5 — Full Fusion *Future*
-- 🔜 All sensors working as one unified system
-- 🔜 Machine learning print quality prediction
-- 🔜 Self-tuning per filament based on print history
-- 🔜 Native Klipper module integration
+KlipperScreen integration — Smart Tune menu on your touchscreen. One tap to override speed zone, run shaper, or check status mid print.
 
----
 
-## Quick Start
+Feature Tiers
 
-### Requirements
-- Klipper installed and running
-- Moonraker installed and running
-- Mainsail or Fluidd web interface
+KlipperFusion grows with your hardware. Every tier adds features, nothing breaks what was already working.
 
-### Installation
+Tier 0 — Any Klipper printer, no extra hardware
 
-```bash
-cd ~
+
+Dynamic accel by height
+Smart start/end macros
+Auto shaper scheduling with max accel update
+Web dashboard
+KlipperScreen menu
+
+
+Tier 1 — Add a chamber sensor (SHT3X, BME280, anything)
+
+
+Automatic heat soak for ASA/ABS
+Humidity warnings before prints start
+Chamber condition logging
+
+
+Tier 2 — Add ADXL345
+
+
+Scheduled shaper calibration
+Resonance monitoring during printing
+Belt tension alerts via Shake&Tune integration
+
+
+Tier 3 — Add VL53L5CX ToF sensor (in development)
+
+
+First layer optical scanning
+Real time flow compensation from actual surface readings
+Spaghetti and failure detection
+Layer shift detection
+
+
+Tier 4 — Add a camera (planned)
+
+
+AI failure detection
+Timelapse with quality tagging
+
+
+Tier 5 — Full fusion (the goal)
+
+
+All sensors working as one system
+Self tuning per filament
+Print quality prediction
+Eventually a native Klipper module, not just macros
+
+
+
+Install
+
+bashcd ~
 git clone https://github.com/nukes1810/KlipperFusion.git
 cd KlipperFusion
 ./install.sh
-```
 
-Then add to your `printer.cfg`:
+Add to printer.cfg:
 
-```ini
-[include klipper_fusion.cfg]
-```
+ini[include klipper_fusion.cfg]
 
-Restart Klipper and you're running Tier 0.
+Restart Klipper. You're running Tier 0.
 
----
 
-## Configuration
+Slicer Setup
 
-Basic configuration in `klipper_fusion.cfg`:
+Machine start gcode:
 
-```ini
-[fusion_core]
-# Enable features based on your hardware
-smart_tune: True          # Dynamic accel by height (Tier 0)
-auto_shaper: True         # Scheduled shaper calibration (Tier 0)
-shaper_interval: 14       # Days between auto-calibration
-
-# Tier 1 - uncomment if you have a chamber sensor
-# heat_soak: True
-# humidity_warn: True
-# chamber_sensor: enclosure_temp
-
-# Tier 3 - uncomment when VL53L5CX is installed
-# tof_sensor: True
-# flow_compensation: True
-# failure_detection: True
-```
-
-### Machine Start Gcode (OrcaSlicer / PrusaSlicer)
-
-```
 START_PRINT BED_TEMP=[first_layer_bed_temperature] EXTRUDER_TEMP=[first_layer_temperature] FILAMENT=[filament_type] CHAMBER_TEMP=[chamber_temperature]
-```
 
-### Filament Chamber Temperatures
+Set chamber temp in your filament presets:
 
-Set in your slicer filament presets:
-- ASA → 40°C
-- ABS → 40°C
-- PLA → 0 (skips heat soak)
-- PETG → 0 (skips heat soak)
 
----
+ASA / ABS → 40
+Everything else → 0
 
-## Dynamic Acceleration System
 
-KlipperFusion automatically adjusts acceleration based on print height to eliminate banding and resonance artifacts on tall prints.
 
-| Zone | Height | Acceleration | Why |
-|---|---|---|---|
-| 🟢 Full Speed | Z < 50mm | 100% of max_accel | Part is short and rigid |
-| 🟡 Medium Speed | Z 50-150mm | 70% of max_accel | Reducing vibration risk |
-| 🔴 Safe Speed | Z > 150mm | 45% of max_accel | Tall prints need stability |
+Dashboard
 
-Accel values are calculated automatically from your input shaper results after every calibration run. No manual tuning required.
+After install, open from any browser:
 
----
-
-## Web Dashboard
-
-KlipperFusion includes a real-time web dashboard accessible from any browser on your network.
-
-After installation open:
-```
 http://[your-printer-ip]/klipper_fusion
-```
 
-**Dashboard shows:**
-- Current speed zone in plain English
-- Print height and progress
-- Chamber temperature and humidity
-- Nozzle and bed temperatures
-- Input shaper calibration status
-- Live activity log of all tuning events
+Shows everything in plain English. No digging through console logs.
 
----
 
-## KlipperScreen Integration
+Hardware This Was Built On
 
-KlipperFusion adds a **Smart Tune** menu to KlipperScreen with:
-- One-tap accel zone override
-- Run shaper calibration button
-- Heat soak controls
-- Live tune status
 
----
+Nebula 370 custom CoreXY
+Xol toolhead
+Rapido HF V2 hotend
+Sherpa Mini extruder
+Cartographer probe
+EBB36 Gen 2 toolhead board
+SHT3X chamber sensor
+ADXL345 via Cartographer
 
-## Supported Hardware
 
-### Probes / Bed Leveling
-- Cartographer (recommended)
-- Beacon
-- BLTouch / CR Touch
-- Any Klipper-compatible probe
+It works on other printers too. If you get it running on yours, open a PR with your config and it'll go in the examples folder.
 
-### Chamber Sensors
-- SHT3X (recommended)
-- BME280
-- AHT10
-- Any Klipper temperature sensor
 
-### Accelerometers
-- ADXL345 (recommended)
-- LIS2DW
-- MPU-9250
+Roadmap
 
-### ToF Sensors (Tier 3 — Coming Soon)
-- VL53L5CX (recommended — 8x8 zone array)
-- VL53L1X (single zone)
 
-### Tested Printers
-- Nebula 370 (CoreXY) — primary development platform
-- More coming as community contributes configs
+ Dynamic accel by height
+ Smart macros
+ Auto shaper scheduling
+ Max accel auto-update from shaper results
+ Web dashboard
+ KlipperScreen integration
+ Chamber heat soak
+ Humidity monitoring
+ One line installer
+ VL53L5CX Klipper driver
+ First layer optical scanning
+ Real time flow compensation
+ Failure detection
+ Moonraker update manager
+ Native Klipper module
 
----
 
-## Roadmap
 
-- [x] Dynamic accel by height
-- [x] Smart START_PRINT macro
-- [x] Auto shaper scheduling
-- [x] Post-calibration max_accel auto-update
-- [x] Web dashboard
-- [x] KlipperScreen integration
-- [x] Chamber heat soak
-- [x] Humidity monitoring
-- [ ] One-line installer script
-- [ ] VL53L5CX native Klipper driver
-- [ ] First layer optical scanning
-- [ ] Real-time flow compensation
-- [ ] Failure detection
-- [ ] Moonraker update manager integration
-- [ ] ML print quality prediction
-- [ ] Native Klipper module (no macros)
+Want to Help?
 
----
+This project needs people who know what they're doing. Specifically:
 
-## Contributing
 
-KlipperFusion is built by the community for the community. Contributions welcome:
+Python developers who know Klipper internals — the end goal is native modules not just macros
+People with different printer setups — the more hardware this is tested on the better
+Sensor people — if you've worked with ToF sensors, I2C, or computer vision on embedded systems
+People who are just fed up with locked down firmware and want to do something about it
 
-- **Sensor drivers** — add support for new sensors
-- **Printer configs** — share your working configuration
-- **Bug reports** — open an issue with your printer details
-- **Feature requests** — open a discussion
-- **Documentation** — help others get started
 
-Please read `CONTRIBUTING.md` before submitting a pull request.
+Open an issue, start a discussion, or just submit a PR. Everything is welcome.
 
----
+If you find a bug, open an issue with your printer config and what happened. If you want a feature, explain what problem it solves. That's it.
 
-## Project Status
 
-KlipperFusion is in **active development**. Tier 0 and Tier 1 are stable and running in daily use. Tier 3 (VL53L5CX optical scanning) is in development with hardware arriving soon.
+License
 
-This project started as a personal build log for a Nebula 370 custom printer and grew into something the whole community can benefit from. Every feature was built, tested, and refined through real printing — not just theory.
+MIT. Use it however you want. Build on it. Fork it. Sell a product with it if you want. Just don't lock it down — that's kind of the whole point.
 
----
 
-## License
+Thanks
 
-MIT License — see [LICENSE](LICENSE) for details.
 
-Use it, modify it, build on it, share it. That's the point.
+Klipper — none of this exists without it
+KAMP — showed how to do modular Klipper additions properly
+Klippain Shake&Tune — the gold standard for community Klipper tools
+Everyone in the Klipper community who answered questions, shared configs, and kept pushing what custom printers can do
 
----
 
-## Acknowledgements
 
-- [Klipper](https://github.com/Klipper3d/klipper) — the firmware that makes all of this possible
-- [KAMP](https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging) — inspiration for the modular approach
-- [Klippain Shake&Tune](https://github.com/Frix-x/klippain-shaketune) — shaper calibration integration
-- The entire Klipper community for pushing what's possible
-
----
-
-*Built on a Nebula 370 with Xol toolhead, Rapido HF V2, Sherpa Mini, and Cartographer. Designed to work on everything.*
+This is a real project built on a real printer. Everything in the current feature set has been running in daily use. The roadmap is where it's going — contributions welcome at every step.
