@@ -206,7 +206,7 @@ http://[your-printer-ip]:8080
 - Rapido HF V2 hotend
 - Sherpa Mini extruder
 - Cartographer V4 probe
-- EBB36 Gen 2 toolhead CAN board
+- EBB36 Gen 2 toolhead USB
 - TMC5160 X/Y drivers
 - SHT3X chamber sensor (temp + humidity)
 - ADXL345 via Cartographer
