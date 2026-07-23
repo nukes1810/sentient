@@ -4,7 +4,8 @@
 # v3 fixes:
 #   - Store nozzle temp and reheat before printing calibration square
 #   - Nozzle was cooling during 35 second bed scan causing shutdown
-#   - Tighter infill spacing (0.45mm) for solid calibration square
+#   - Solid infill (0.45mm spacing) for accurate scanning
+#   - Each iteration prints in a different position (no overlap)
 #   - Better error messages throughout
 
 import logging
@@ -40,7 +41,7 @@ class SentientFirstLayer:
         self.saved_offsets = {}
         self.current_filament = 'PLA'
         self.calibrating = False
-        self._nozzle_temp = None  # stored nozzle temp for reheating
+        self._nozzle_temp = None
 
         self.gcode.register_command(
             'SENTIENT_CALIBRATE_Z',
@@ -152,14 +153,13 @@ class SentientFirstLayer:
         self._run_gcode("SET_GCODE_OFFSET Z=%.4f MOVE=1" % offset)
 
     def _reheat_nozzle(self, gcmd):
-        """Reheat nozzle to stored temp — called after bed scan"""
+        """Reheat nozzle to stored temp after bed scan"""
         if self._nozzle_temp is not None:
             gcmd.respond_info(
                 "Reheating nozzle to %.0f°C after bed scan..." % self._nozzle_temp
             )
             self._run_gcode("M109 S%.0f" % self._nozzle_temp)
         else:
-            # No stored temp — get current target
             try:
                 extruder = self.printer.lookup_object('extruder')
                 current_target = extruder.get_heater().get_status(None)['target']
@@ -179,7 +179,6 @@ class SentientFirstLayer:
         iterations = gcmd.get_int('ITERATIONS', self.iterations)
         target = FILAMENT_TARGETS.get(filament, FILAMENT_TARGETS['default'])
 
-        # Store nozzle temp for reheating after scans
         self._nozzle_temp = nozzle_temp
 
         gcmd.respond_info(
@@ -217,7 +216,7 @@ class SentientFirstLayer:
                 "Check BED_MESH_CALIBRATE is working correctly."
             )
 
-        # CRITICAL: Reheat nozzle after bed scan — scan takes 35s and nozzle cools
+        # CRITICAL: Reheat nozzle after bed scan
         self._reheat_nozzle(gcmd)
 
         best_offset = self._get_current_z_offset()
@@ -225,8 +224,14 @@ class SentientFirstLayer:
         for i in range(iterations):
             gcmd.respond_info("--- Iteration %d of %d ---" % (i + 1, iterations))
 
-            gcmd.respond_info("Printing calibration square...")
-            self._print_calibration_square()
+            # Each iteration prints in a different spot — no overlap
+            iter_x = self.cal_x + (i * (self.cal_size + 10))
+            iter_y = self.cal_y
+
+            gcmd.respond_info(
+                "Printing calibration square at X%.0f Y%.0f..." % (iter_x, iter_y)
+            )
+            self._print_calibration_square(x_offset=iter_x, y_offset=iter_y)
 
             gcmd.respond_info("Waiting for layer to stabilize (5s)...")
             self._run_gcode("G4 P5000")
@@ -234,7 +239,7 @@ class SentientFirstLayer:
             gcmd.respond_info("Scanning first layer...")
             self._run_gcode("BED_MESH_CALIBRATE")
 
-            # CRITICAL: Reheat nozzle after each scan
+            # Reheat nozzle after each scan
             self._reheat_nozzle(gcmd)
 
             layer_avg = self._get_mesh_average()
@@ -265,15 +270,12 @@ class SentientFirstLayer:
             else:
                 gcmd.respond_info(
                     "Could not calculate layer height.\n"
-                    "Baseline: %s  Layer scan: %s" % (
+                    "Baseline: %s  Layer scan: %s\n"
+                    "Check BED_MESH_CALIBRATE completed successfully." % (
                         "OK" if self.baseline_avg is not None else "MISSING",
                         "OK" if layer_avg is not None else "MISSING"
                     )
                 )
-
-            if i < iterations - 1:
-                gcmd.respond_info("Clearing calibration area...")
-                self._clear_calibration_area()
 
         final_offset = self._get_current_z_offset()
         self._save_offset(filament, final_offset)
@@ -288,10 +290,10 @@ class SentientFirstLayer:
         )
         self.calibrating = False
 
-    def _print_calibration_square(self):
-        """Print a solid filled calibration square"""
-        x = self.cal_x
-        y = self.cal_y
+    def _print_calibration_square(self, x_offset=None, y_offset=None):
+        """Print a solid filled calibration square at specified position"""
+        x = x_offset if x_offset is not None else self.cal_x
+        y = y_offset if y_offset is not None else self.cal_y
         size = self.cal_size
         speed = self.cal_speed
         lh = self.layer_height
@@ -321,7 +323,7 @@ class SentientFirstLayer:
             )
             cx, cy = tx, ty
 
-        # Solid infill — 0.45mm line spacing for solid square
+        # Solid infill — 0.45mm line spacing
         line_spacing = 0.45
         current_y = y + line_spacing
         direction = 1
@@ -347,16 +349,6 @@ class SentientFirstLayer:
 
         self._run_gcode("G92 E0")
         self._run_gcode("G1 Z5 F3000")
-
-    def _clear_calibration_area(self):
-        self._run_gcode("G1 Z20 F3000")
-        self._run_gcode(
-            "G1 X%.2f Y%.2f F6000" % (
-                self.cal_x + self.cal_size + 20,
-                self.cal_y
-            )
-        )
-        self._run_gcode("G4 P2000")
 
     def cmd_SENTIENT_SCAN_LAYER(self, gcmd):
         gcmd.respond_info("Scanning surface...")

@@ -1176,12 +1176,12 @@ async function update(){
     if(ext){
       const et=ext.temperature.toFixed(1),etg=ext.target.toFixed(0);
       st('t-nz',`${et}°C`);st('tt-nz',ext.target>0?`→${etg}°C`:'Off');sd('dot-nz',tdot(ext.temperature,150,60));
-      st('tc-nz',`${et}°C`);
+      st('tc-nz',`${et}°C`);const tni=document.getElementById('ti-nz');if(tni&&document.activeElement!==tni)tni.placeholder=etg;
     }
     if(bed){
       const bt=bed.temperature.toFixed(1),btg=bed.target.toFixed(0);
       st('t-bd',`${bt}°C`);st('tt-bd',bed.target>0?`→${btg}°C`:'Off');sd('dot-bd',tdot(bed.temperature,80,40));
-      st('tc-bd',`${bt}°C`);
+      st('tc-bd',`${bt}°C`);const tbi=document.getElementById('ti-bd');if(tbi&&document.activeElement!==tbi)tbi.placeholder=btg;
     }
     if(enc){
       st('t-ch',`${enc.temperature.toFixed(1)}°C`);
