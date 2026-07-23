@@ -752,9 +752,27 @@ input[type=range]{flex:1;accent-color:var(--acc)}
 <div class="mov hidden" id="bg-modal">
   <div class="modal">
     <div class="modal-t">Background Image</div>
-    <div class="modal-s">Enter image URL or leave blank to remove</div>
-    <div class="mf"><div class="ml">Image URL</div><input class="mi" type="text" id="bg-inp" placeholder="https://..."></div>
-    <div class="mac"><button class="btn primary" onclick="saveBg()">Apply</button><button class="btn" onclick="document.getElementById('bg-inp').value='';saveBg()">Remove</button><button class="btn" onclick="cm('bg-modal')">Cancel</button></div>
+    <div class="modal-s">Upload an image or enter a URL</div>
+    <div class="mf">
+      <div class="ml">Upload Image</div>
+      <div style="border:2px dashed var(--bd);border-radius:var(--r);padding:16px;text-align:center;cursor:pointer;transition:border .15s" id="bg-drop" onclick="document.getElementById('bg-file').click()" ondragover="event.preventDefault();this.style.borderColor='var(--acc)'" ondragleave="this.style.borderColor='var(--bd)'" ondrop="handleBgDrop(event)">
+        <div style="font-size:24px;margin-bottom:6px">🖼️</div>
+        <div style="font-size:12px;color:var(--dim)">Click or drag & drop an image</div>
+        <div style="font-size:11px;color:var(--mute);margin-top:3px">JPG, PNG, WebP supported</div>
+        <input type="file" id="bg-file" accept="image/*" style="display:none" onchange="handleBgFile(this)">
+      </div>
+      <div style="font-size:11px;color:var(--dim);text-align:center;margin:8px 0">— or —</div>
+      <div class="ml">Image URL</div>
+      <input class="mi" type="text" id="bg-inp" placeholder="https://example.com/image.jpg">
+    </div>
+    <div id="bg-preview" style="display:none;margin-bottom:12px">
+      <img id="bg-preview-img" style="width:100%;border-radius:var(--r);max-height:140px;object-fit:cover">
+    </div>
+    <div class="mac">
+      <button class="btn primary" onclick="saveBg()">Apply</button>
+      <button class="btn" onclick="document.getElementById('bg-inp').value='';document.getElementById('bg-preview').style.display='none';saveBg()">Remove Background</button>
+      <button class="btn" onclick="cm('bg-modal')">Cancel</button>
+    </div>
   </div>
 </div>
 
@@ -841,7 +859,52 @@ if(ST.tiles){const g=document.getElementById('tile-grid');ST.tiles.forEach(id=>{
 // Settings
 function saveCam(){ST.cam=document.getElementById('cam-inp').value.trim()||DCAM;saveS();applyS();cm('cam-modal');showToast('Camera updated','good');}
 function saveMName(){const v=document.getElementById('mname-inp').value.trim();if(v){ST.name=v;saveS();applyS();cm('mname-modal');showToast('Name updated','good');}}
-function saveBg(){ST.bg=document.getElementById('bg-inp').value.trim();saveS();applyS();cm('bg-modal');showToast(ST.bg?'Background set':'Background removed','good');}
+function handleBgFile(input){
+  if(!input.files||!input.files[0])return;
+  const file=input.files[0];
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const dataUrl=e.target.result;
+    document.getElementById('bg-inp').value='';
+    document.getElementById('bg-preview-img').src=dataUrl;
+    document.getElementById('bg-preview').style.display='block';
+    document.getElementById('bg-drop').style.borderColor='var(--grn)';
+    // Store as data URL
+    ST.bg=dataUrl;
+  };
+  reader.readAsDataURL(file);
+}
+function handleBgDrop(e){
+  e.preventDefault();
+  document.getElementById('bg-drop').style.borderColor='var(--bd)';
+  const file=e.dataTransfer.files[0];
+  if(file&&file.type.startsWith('image/')){
+    document.getElementById('bg-file').files=e.dataTransfer.files;
+    handleBgFile({files:e.dataTransfer.files});
+  }
+}
+function saveBg(){
+  const urlVal=document.getElementById('bg-inp').value.trim();
+  // URL takes priority over uploaded file
+  if(urlVal)ST.bg=urlVal;
+  // else ST.bg already set by file upload handler
+  if(!urlVal&&!ST.bg)ST.bg='';
+  saveS();applyS();cm('bg-modal');
+  showToast(ST.bg?'Background set':'Background removed','good');
+}
+// Show preview when typing URL
+document.addEventListener('DOMContentLoaded',()=>{
+  const inp=document.getElementById('bg-inp');
+  if(inp)inp.addEventListener('input',e=>{
+    const v=e.target.value.trim();
+    if(v){document.getElementById('bg-preview-img').src=v;document.getElementById('bg-preview').style.display='block';}
+    else document.getElementById('bg-preview').style.display='none';
+  });
+  // Pre-fill current values in modals
+  if(ST.cam&&ST.cam!==DCAM)document.getElementById('cam-inp').value=ST.cam;
+  if(ST.name)document.getElementById('mname-inp').value=ST.name;
+  if(ST.bg&&!ST.bg.startsWith('data:')){document.getElementById('bg-inp').value=ST.bg;document.getElementById('bg-preview-img').src=ST.bg;}
+});
 
 // Log
 function ts(){return new Date().toLocaleTimeString('en-US',{hour12:false})}
@@ -1083,10 +1146,10 @@ async function loadSysStatus(){
   try{
     const r=await fetch(`${HOST}/machine/proc_stats`).then(r=>r.json());
     const s=r.result||{};
-    if(s.cpu_temp)st('sys-temp',`${parseFloat(s.cpu_temp).toFixed(1)}°C`);
-    if(s.cpu_usage!=null){const c=parseFloat(s.cpu_usage).toFixed(1);st('sys-cpu',`${c}%`);const b=document.getElementById('sys-cpu-b');if(b)b.style.width=`${c}%`;}
-    if(s.memory){const p=Math.round(s.memory.used/s.memory.total*100);st('sys-ram',`${p}% (${Math.round(s.memory.used/1024)}MB)`);const b=document.getElementById('sys-ram-b');if(b)b.style.width=`${p}%`;}
-    if(s.uptime){const u=Math.round(s.uptime);st('sys-up',`${Math.floor(u/3600)}h ${Math.floor((u%3600)/60)}m`);}
+    if(s.cpu_temp)st("sys-temp",`${parseFloat(s.cpu_temp).toFixed(1)}°C`);
+    if(s.system_cpu_usage){const c=parseFloat(s.system_cpu_usage.cpu).toFixed(1);st("sys-cpu",`${c}%`);const b=document.getElementById("sys-cpu-b");if(b)b.style.width=`${c}%`;}
+    if(s.system_memory){const p=Math.round(s.system_memory.used/s.system_memory.total*100);st("sys-ram",`${p}% (${Math.round(s.system_memory.used/1024)}MB)`);const b=document.getElementById("sys-ram-b");if(b)b.style.width=`${p}%`;}
+    if(s.system_uptime){const u=Math.round(s.system_uptime);st("sys-up",`${Math.floor(u/3600)}h ${Math.floor((u%3600)/60)}m`);}
   }catch(e){}
 }
 setInterval(()=>{if(document.getElementById('page-klipper').classList.contains('active'))loadSysStatus();},5000);
@@ -1134,29 +1197,31 @@ async function update(){
     if(mcu_t)st('t-mcu',`${mcu_t.temperature.toFixed(1)}°C`);
     if(pi_t)st('t-pi',`${pi_t.temperature.toFixed(1)}°C`);
 
-    // MCU raw stats — frequency comes from mcu_freq field
-    const mcuRaw=s['mcu'];
-    const ebbRaw=s['mcu EBB36'];
-    const crtRaw=s['mcu cartographer'];
-
+    // MCU temps from temperature sensors
     if(mcu_t)st('mcu-temp',`${mcu_t.temperature.toFixed(1)}°C`);
     if(ebb_t)st('ebb-temp',`${ebb_t.temperature.toFixed(1)}°C`);
     if(crt_t)st('crt-temp',`${crt_t.temperature.toFixed(1)}°C`);
 
-    if(mcuRaw){
-      // mcu_freq is in Hz, convert to MHz
-      if(mcuRaw.mcu_freq)st('mcu-freq',`${(mcuRaw.mcu_freq/1e6).toFixed(1)} MHz`);
-      if(mcuRaw.mcu_awake!=null)st('mcu-awk',`${(mcuRaw.mcu_awake*100).toFixed(1)}%`);
-      if(mcuRaw.bytes_retransmit!=null)st('mcu-rtx',mcuRaw.bytes_retransmit);
-    }
-    if(ebbRaw){
-      if(ebbRaw.mcu_freq)st('ebb-freq',`${(ebbRaw.mcu_freq/1e6).toFixed(1)} MHz`);
-      if(ebbRaw.mcu_awake!=null)st('ebb-awk',`${(ebbRaw.mcu_awake*100).toFixed(1)}%`);
-    }
-    if(crtRaw){
-      if(crtRaw.mcu_freq)st('crt-freq',`${(crtRaw.mcu_freq/1e6).toFixed(1)} MHz`);
-      if(crtRaw.mcu_awake!=null)st('crt-awk',`${(crtRaw.mcu_awake*100).toFixed(1)}%`);
-    }
+    // MCU frequency — fetch separately as Moonraker needs explicit mcu object fields
+    try{
+      const mcuObj=await fetch(`${HOST}/printer/objects/query?mcu`).then(r=>r.json());
+      const ms=(mcuObj.result.status.mcu||{}).last_stats||{};
+      if(ms.freq)st('mcu-freq',`${(ms.freq/1e6).toFixed(1)} MHz`);
+      if(ms.mcu_awake!=null)st('mcu-awk',`${(ms.mcu_awake*100).toFixed(1)}%`);
+      if(ms.bytes_retransmit!=null)st('mcu-rtx',ms.bytes_retransmit);
+    }catch(e){}
+    try{
+      const ebbObj=await fetch(`${HOST}/printer/objects/query?mcu%20EBB36`).then(r=>r.json());
+      const es=(ebbObj.result.status['mcu EBB36']||{}).last_stats||{};
+      if(es.freq)st('ebb-freq',`${(es.freq/1e6).toFixed(1)} MHz`);
+      if(es.mcu_awake!=null)st('ebb-awk',`${(es.mcu_awake*100).toFixed(1)}%`);
+    }catch(e){}
+    try{
+      const crtObj=await fetch(`${HOST}/printer/objects/query?mcu%20cartographer`).then(r=>r.json());
+      const cs=(crtObj.result.status['mcu cartographer']||{}).last_stats||{};
+      if(cs.freq)st('crt-freq',`${(cs.freq/1e6).toFixed(1)} MHz`);
+      if(cs.mcu_awake!=null)st('crt-awk',`${(cs.mcu_awake*100).toFixed(1)}%`);
+    }catch(e){}
 
     // Fan
     if(s.fan&&s.fan.speed!=null){const fp=Math.round(s.fan.speed*100);document.getElementById('fan-sl').value=fp;ufan(fp);}
