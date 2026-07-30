@@ -80,14 +80,14 @@ class SentientFirstLayer:
         )
 
         self.printer.register_event_handler(
-            'klippy:connect', self._handle_connect
+            'klippy:ready', self._handle_connect
         )
         self.logger.info("sentient_first_layer v3 loaded")
 
     def _handle_connect(self):
         try:
             save_variables = self.printer.lookup_object('save_variables')
-            svv = save_variables.allVariables()
+            svv = save_variables.allVariables
             for key, value in svv.items():
                 if key.startswith('sentient_z_offset_'):
                     filament = key.replace('sentient_z_offset_', '').upper()
