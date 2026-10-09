@@ -100,10 +100,8 @@ sentient grows with your hardware. Every tier adds features, nothing breaks what
 ## Install
 
 ```bash
-cd ~
-git clone https://github.com/nukes1810/sentient.git
-cd sentient
-./install.sh
+mkdir -p ~/klipper/klippy/extras ~/printer_data/config
+bash <(curl -sSL https://raw.githubusercontent.com/nukes1810/sentient/main/install.sh)
 ```
 
 Add to `printer.cfg`:
